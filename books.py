@@ -39,6 +39,16 @@ async def read_category_by_query(category:str):
 
     return books_to_return
 
+# Project1: end-point가 짧은 것을 먼저
+@app.get("/books/byauthor/")
+async def read_books_by_author_path(author:str):
+    books_to_return = []
+    for book in BOOKS:
+        if book.get('author').casefold()==author.casefold():
+            books_to_return.append(book)
+    return books_to_return
+    
+
 # Query Parameters (2)
 # http://127.0.0.1:8000/books/Author2/?category=Category2
 @app.get("/books/{book_author}/")
@@ -69,3 +79,9 @@ async def delete_book(book_title:str):
         if BOOKS[i].get('title').casefold() == book_title.casefold():
             BOOKS.pop(i)
             break
+
+# Project2 : 데이터 유효성, 예외 처리 등
+# dict() => .model.dump()
+# schema_extra => json_schema_extra
+# id: Optional[int] = None
+        
