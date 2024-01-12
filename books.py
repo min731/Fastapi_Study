@@ -84,4 +84,5 @@ async def delete_book(book_title:str):
 # dict() => .model.dump()
 # schema_extra => json_schema_extra
 # id: Optional[int] = None
-        
+
+# Pydantics => 데이터 유효성 검사
