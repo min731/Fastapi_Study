@@ -24,6 +24,7 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+# Table 정보는 model.py에 있으니 Pydantic만 선언
 # 요청 형식 지정
 class TodoRequest(BaseModel):
     # id는 이미 pk로 지정
@@ -44,7 +45,7 @@ class TodoRequest(BaseModel):
         
 @app.get("/",status_code=status.HTTP_200_OK)
 async def read_all(db : db_dependency):
-    return db.query(Todos).all()
+    return db.query(Todos).all() # Todos 라는 테이블의 모든 값
 
 @app.get("/todo/{todo_id}",status_code=status.HTTP_200_OK)
 async def read_todo(db : db_dependency, todo_id : int = Path(gt=0)):
