@@ -17,7 +17,6 @@ BOOKS = [
 ]
 # {"title": "Title Six", "author": "Author Two", "category": "IT"}
 
-
 ### GET ###
 @app.get ("/api-endpoint") # 먼저 선언한 endpoint로 작동
 async def first_api():
