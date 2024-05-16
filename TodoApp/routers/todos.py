@@ -10,6 +10,9 @@ router = APIRouter()
 # uvicorn main:app --reload
 # todos.db 와 pycache 생성
 
+# JWT 발급 후 인증
+from .auth import get_current_user
+
 
 def get_db():
     db = SessionLocal()
@@ -21,6 +24,9 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+
+# Swagger UI 자물쇠 클릭후, username/password 입력
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 # 요청 형식 지정
 class TodoRequest(BaseModel):
@@ -41,21 +47,49 @@ class TodoRequest(BaseModel):
         }
         
 @router.get("/",status_code=status.HTTP_200_OK)
-async def read_all(db : db_dependency):
-    return db.query(Todos).all()
+# async def read_all(db : db_dependency):
+# jwt 인증해야 가능
+# 인증이후 자신의 todos만 보게끔 설정
+async def read_all(user : user_dependency, db : db_dependency):
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='Authentication Failed')
+    
+    # return db.query(Todos).all()
+    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
 @router.get("/todo/{todo_id}",status_code=status.HTTP_200_OK)
-async def read_todo(db : db_dependency, todo_id : int = Path(gt=0)):
+# jwt 인증 추가
+# async def read_todo(db : db_dependency, todo_id : int = Path(gt=0)):
+async def read_todo(user : user_dependency, db : db_dependency, todo_id : int = Path(gt=0)):
+    
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='Authentication Failed')
+    
     # first() : record만 반환
     # 모든 id를 다 찾는게 아닌 unique한 id값으로 1개 찾음
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+
+    # 요청한 todo_id가 같으면서 사용자의 todo 인 것
+    todo_model = db.query(Todos).filter(Todos.id == todo_id)\
+        .filter(Todos.owner_id == user.get('id')).first() 
     if todo_model is not None:
         return todo_model
     raise HTTPException(status_code=404,detail='Todo not found.')
 
 @router.post("/todo/",status_code=status.HTTP_201_CREATED)
-async def create_todo(db : db_dependency, todo_request : TodoRequest):
-    todo_model = Todos(**todo_request.model_dump())
+# async def create_todo(db : db_dependency, todo_request : TodoRequest):
+# 사용자 jwt 인증 추가
+async def create_todo(user : user_dependency, db : db_dependency, todo_request : TodoRequest):
+
+    # 사용자 jwt 인증 추가
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='Authencation Failed ')
+    
+    # todo_model = Todos(**todo_request.model_dump())
+    todo_model = Todos(**todo_request.model_dump(),
+                       owner_id = user.get('id')) # 등록자 id 추가
     
     db.add(todo_model)
     db.commit() # transaction
