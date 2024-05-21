@@ -5,20 +5,36 @@ from sqlalchemy import pool
 
 from alembic import context
 
+# models.py 불러오기
+import models
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
+
+import io
+from alembic import context
+
+# Alembic 설정 파일을 읽는 부분에서 인코딩을 지정
+with io.open(context.config.config_file_name, 'r', encoding='utf-8') as config_file:
+    context.config = config_file.read()
+
+
+
 config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+
+# if config.config_file_name is not None: # 주석
+    # fileConfig(config.config_file_name) # 주석
+fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+# target_metadata = None
+target_metadata = models.Base.metadata # Table, Column 정보 등
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
