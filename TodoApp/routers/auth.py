@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from typing import Annotated
 from fastapi import APIRouter,Depends, HTTPException,status
 from pydantic import BaseModel
-from database import SessionLocal
-from models import Users
+from ..database import SessionLocal
+from ..models import Users
 from passlib.context import CryptContext # 암호화, 해싱
 from sqlalchemy.orm import Session
 

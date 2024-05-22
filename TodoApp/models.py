@@ -1,4 +1,4 @@
-from database import Base # database.py에서 선언한 db 객체 가져옴
+from .database import Base # database.py에서 선언한 db 객체 가져옴
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 
 class Users(Base):
