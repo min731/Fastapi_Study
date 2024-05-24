@@ -4,67 +4,9 @@ from ..database import Base
 from sqlalchemy.orm import sessionmaker
 from fastapi import status
 
-# test용 DB <-> Production DB
-SQLALCHEMY_DATABASE_URL = "sqlite:///./testdb.db"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread" : False},
-    poolclass = StaticPool,
-    )
-
-TestingSessionLocal = sessionmaker(autocommit=False,
-                                   autoflush=False,
-                                   bind=engine)
-
-Base.metadata.create_all(bind=engine) # testdb.db 생김
-
-
-
-
-
-
-def overrride_get_db():
-
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-def override_get_current_user():
-    return {'username':'codingwithrobytest','id':1,'user_role':'admin'}
-
-from ..main import app
-from ..routers.todos import get_db,get_current_user
-
-app.dependency_overrides[get_db] = overrride_get_db
-app.dependency_overrides[get_current_user] = override_get_current_user
-
-import pytest
-from ..models import Todos
-
-@pytest.fixture # 객체 고정
-def test_todo():
-    todo = Todos(
-        title = 'Learn to code',
-        description = 'Need to learn everyday!',
-        priority = 5,
-        complete = False,
-        owner_id = 1,
-    )
-
-    db = TestingSessionLocal()
-    db.add(todo)
-    db.commit()
-    yield todo # test_read_all_authenticated()를 위해 yield
-    with engine.connect() as connection: # 이후 매번 DB에서 삭제하여 초기화
-        connection.execute(text("DELETE FROM todos;"))
-        connection.commit()
-
-from fastapi.testclient import TestClient
-client = TestClient(app)
-
+# utils.py 파일에 모든 객체를 선언하고 불러옴
+from .utils import *
+from ..routers import todos
 
 def test_read_all_authenticated(test_todo):
     response = client.get("/") # main.py에서 "/" 경로 시의 return 확인
@@ -117,3 +59,50 @@ def test_create_todo(test_todo): # 새 todo값 생성 확인, [test_todo 기입]
     assert model.priority == request_data.get('priority')
     assert model.complete == request_data.get('complete')
 
+
+
+def test_update_todo(test_todo): # 수정 확인
+    request_data = {
+        'title' : 'Change Todo!',
+        'description' : 'Change Todo Description',
+        'priority' : 5,
+        'complete' : False,
+        'owner_id' : 1
+    }
+
+    response = client.put("/todo/1", json=request_data)
+    assert response.status_code == 204
+
+    db = TestingSessionLocal()
+    model = db.query(Todos).filter(Todos.id == 1).first()
+    assert model.title == request_data.get('title')
+    assert model.description == request_data.get('description')
+    assert model.priority == request_data.get('priority')
+    assert model.complete == request_data.get('complete')
+
+def test_update_todo_not_found(test_todo): # 수정 확인
+    request_data = {
+        'title' : 'Change Todo!',
+        'description' : 'Change Todo Description',
+        'priority' : 5,
+        'complete' : False,
+        'owner_id' : 1
+    }
+
+    response = client.put("/todo/999", json=request_data) # id 999 일때는 404
+    assert response.status_code == 404
+    assert response.json() == {'detail' : 'Todo not found'}
+
+def test_delete_todo(test_todo): # 삭제 확인
+    response = client.delete("/todo/1")
+    assert response.status_code == 204
+    
+    db = TestingSessionLocal()
+    model = db.query(Todos).filter(Todos.id == 1).first()
+    assert model is None # 삭제 했으므로 없음
+
+def test_delete_todo(test_todo): # 삭제 확인
+    response = client.delete("/todo/999") # 없는 id 이므로 404
+    assert response.status_code == 404
+    assert response.json() == {'detail' : 'Todo not found.'}
+    # print(response)
