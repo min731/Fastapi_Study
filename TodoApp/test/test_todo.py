@@ -1,12 +1,5 @@
-from sqlalchemy import create_engine, text
-from sqlalchemy.pool import StaticPool
-from ..database import Base
-from sqlalchemy.orm import sessionmaker
-from fastapi import status
-
 # utils.py 파일에 모든 객체를 선언하고 불러옴
 from .utils import *
-from ..routers import todos
 
 def test_read_all_authenticated(test_todo):
     response = client.get("/") # main.py에서 "/" 경로 시의 return 확인

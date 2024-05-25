@@ -1,6 +1,5 @@
 from .utils import * # utils.py에 정리된 모든 객체 가져오기
-from ..routers.admin import get_db, get_current_user # 원본 get_db, get_current_user
-from fastapi import status
+from ..routers.admin import get_db # 개별 get_db, get_current_user은 동일
 
 app.dependency_overrides[get_db] = overrride_get_db
 app.dependency_overrides[get_current_user] = override_get_current_user

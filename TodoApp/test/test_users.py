@@ -1,7 +1,7 @@
 from .utils import *
-from ..routers.users import get_db, get_current_user
-from fastapi import status
-
+from ..routers.users import get_db # 개별 get_db , get_current_user는 동일
+# from ..routers.users import get_db, get_current_user
+# from ..routers.users import get_current_user
 
 app.dependency_overrides[get_db] = overrride_get_db
 app.dependency_overrides[get_current_user] = override_get_current_user
